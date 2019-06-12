@@ -16,43 +16,46 @@ boundary                                    p p p
 
 ###############################################################################
 
-# Geometric
-variable                                    side                      equal  replace_side
+# Material
+variable                                    fraction                  equal  #replace_second_element_fraction#
+variable                                    potential                 string #replace_potential#
+variable                                    potential_type            string #replace_potential_type#
 
-# Temperature variables
-variable                                    temp_initial              equal  replace_initial_temperature
-variable                                    temp_final                equal  replace_final_temperature
+# Geometric
+variable                                    side                      equal  #replace_side#
+variable                                    unit_cell_type            string #replace_unit_cell_type#
+variable                                    lattice_parm              equal  #replace_lattice_param#
 
 # Time variables
-variable                                    mytimestep                equal  replace_timestep
-variable                                    hold_1                    equal  replace_hold_1
-variable                                    hold_2                    equal  replace_hold_2
-variable                                    hold_3                    equal  replace_hold_3
+variable                                    mytimestep                equal  #replace_timestep#
+
+# Ensemble
+variable                                    ensemble                  string #replace_ensemble#
 
 # Random seed
-variable                                    seed                      equal  replace_seed
+variable                                    seed                      equal  #replace_seed#
 
 # Data output
-variable                                    mydumprate                equal  replace_dumprate
-variable                                    data_file_characteristics string ../data/txt/replace_filename.txt
-variable                                    data_file_dump_rate       string ../data/lammpstrj/replace_filename.lammpstrj
-variable                                    data_positions_final      string ../data/dat/replace_filename.dat
-variable                                    data_restart              string ../data/rest/replace_filename.rest
+variable                                    mydumprate                equal  #replace_dumprate#
+variable                                    data_file_characteristics string system.txt
+variable                                    data_file_dump_rate       string traj.lammpstrj
+variable                                    data_positions_final      string final.dat
+variable                                    data_restart              string restart.rest
 
 ################################################################################
 
 # Simulation space
-lattice                                     fcc 4.04092655671750
+lattice                                     ${unit_cell_type} ${lattice_parm}
 region                                      my_box block 0 ${side} 0 ${side} 0 ${side}
 create_box                                  2 my_box
 create_atoms                                1 box
-set                                         group all type/fraction 2 0.01 5088
+set                                         group all type/fraction 2 ${fraction} ${seed}
 
 ################################################################################
 
 # Data
-pair_style                                  eam/fs
-pair_coeff                                  * * ../potentials/Al_Sm.eam.fs Al Sm
+pair_style                                  ${potential_type}
+pair_coeff                                  * * ${potential} #replace_elements#
 
 ################################################################################
 
@@ -81,23 +84,8 @@ dump_modify                                 my_dump_rate sort id
 # Open save data
 fix                                         data_saving all ave/time 1 1 ${mydumprate} c_mytemp c_mypress v_myvol c_PE c_KE file ${data_file_characteristics}
 
-# Define the initial velocities
-velocity                                    all create ${temp_initial} ${seed} rot yes dist gaussian
-
-# Hold as melt
-fix                                         run all npt temp ${temp_initial} ${temp_initial} 0.1 iso 0 0 1
-run                                         ${hold_1}
-unfix                                       run
-
-# Quench
-fix                                         run all npt temp ${temp_initial} ${temp_final} 0.1 iso 0 0 1
-run                                         ${hold_2}
-unfix                                       run
-
-# Hold at final temperature
-fix                                         run all npt temp ${temp_final} ${temp_final} 0.1 iso 0 0 1
-run                                         ${hold_3}
-unfix                                       run
+# Start of run
+#replace_holds#
 
 # Close save data
 unfix                                       data_saving
