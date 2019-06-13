@@ -16,7 +16,8 @@ lattice_param = sys.argv[8]  # The lattice paramter
 timestep = sys.argv[9]  # The timestep
 dump_rate = sys.argv[10]  # The rate to dump data
 ensemble = sys.argv[11]  # The ensemble for the holds
-holds = sys.argv[12:]  # temperature and holds as tuples
+vols = sys.argv[12]  # The volume for nvt holds (write None for npt)
+holds = sys.argv[13:]  # temperature and holds as tuples
 
 # Open and read template
 template = open(template)
@@ -25,6 +26,13 @@ template.close()
 
 # Format the holds
 holds = list(map(literal_eval, holds))
+
+# Format the volumes
+try:
+    vols = literal_eval(vols)
+
+except Exception:
+    pass
 
 contents = run_creator(
                        template_contents,
@@ -38,6 +46,7 @@ contents = run_creator(
                        timestep,
                        dump_rate,
                        ensemble,
+                       vols,
                        holds
                        )
 

@@ -29,9 +29,6 @@ variable                                    lattice_parm              equal  #re
 # Time variables
 variable                                    mytimestep                equal  #replace_timestep#
 
-# Ensemble
-variable                                    ensemble                  string #replace_ensemble#
-
 # Random seed
 variable                                    seed                      equal  #replace_seed#
 

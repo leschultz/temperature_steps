@@ -13,6 +13,7 @@ def run_creator(
                 timestep,
                 dump_rate,
                 ensemble,
+                vols,
                 holds
                 ):
 
@@ -30,7 +31,6 @@ def run_creator(
     contents = contents.replace('#replace_lattice_param#', lattice_param)
     contents = contents.replace('#replace_timestep#', timestep)
     contents = contents.replace('#replace_dumprate#', dump_rate)
-    contents = contents.replace('#replace_ensemble#', ensemble)
 
     # Randomize initial velocites
     steps = (
@@ -41,22 +41,50 @@ def run_creator(
              )
 
     # Create a step for every temperature and hold defined
-    for temp, step in holds:
-        temp = str(temp)
-        step = str(step)
-        steps += (
-                  'fix step all npt temp ' +
-                  temp +
-                  ' ' +
-                  temp +
-                  ' '
-                  '0.1 ' +
-                  'iso 0 0 1\n' +
-                  'run ' +
-                  step +
-                  '\n' +
-                  'unfix step\n'
-                  )
+    if ensemble == 'npt':
+        for temp, step in holds:
+            temp = str(temp)
+            step = str(step)
+
+            steps += (
+                      'fix step all npt temp ' +
+                      temp +
+                      ' ' +
+                      temp +
+                      ' '
+                      '0.1 ' +
+                      'iso 0 0 1\n' +
+                      'run ' +
+                      step +
+                      '\n' +
+                      'unfix step\n'
+                      )
+
+    if ensemble == 'nvt':
+        for hold, vol in zip(holds, vols):
+            temp = str(hold[0])
+            step = str(hold[1])
+            l = str(vol**(1/3))
+
+            steps += 'change_box all'
+            steps += ' x final 0.0 '+l
+            steps += ' y final 0.0 '+l
+            steps += ' z final 0.0 '+l
+            steps += ' units box'
+            steps += '\n'
+
+            steps += (
+                      'fix step all nvt temp ' +
+                      temp +
+                      ' ' +
+                      temp +
+                      ' '
+                      '0.1\n' +
+                      'run ' +
+                      step +
+                      '\n' +
+                      'unfix step\n'
+                      )
 
     contents = contents.replace('#replace_holds#', steps)
     contents = contents.replace('#replace_seed#', str(seed))
