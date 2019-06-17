@@ -1,23 +1,26 @@
 #!/usr/bin/env python3
 from ast import literal_eval
 
+import numpy as np
 import sys
+import os
 
 from functions import *
 
-template = sys.argv[1]  # Template file path
-elements = sys.argv[2]  # Elements
-fraction = sys.argv[3]  # Fraction of second element
-potential = sys.argv[4]  # The potential used
-potential_type = sys.argv[5]  # The type of potential
-side = sys.argv[6]  # The length of the cubic simulation box
-unit_cell_type = sys.argv[7]  # fcc, hcp, or bcc
-lattice_param = sys.argv[8]  # The lattice paramter
-timestep = sys.argv[9]  # The timestep
-dump_rate = sys.argv[10]  # The rate to dump data
-ensemble = sys.argv[11]  # The ensemble for the holds
-vols = sys.argv[12]  # The volume for nvt holds (write None for npt)
-holds = sys.argv[13:]  # temperature and holds as tuples
+runs = int(sys.argv[1])  # The number of runs to generate
+template = sys.argv[2]  # Template file path
+elements = sys.argv[3]  # Elements
+fraction = sys.argv[4]  # Fraction of second element
+potential = sys.argv[5]  # The potential used
+potential_type = sys.argv[6]  # The type of potential
+side = sys.argv[7]  # The length of the cubic simulation box
+unit_cell_type = sys.argv[8]  # fcc, hcp, or bcc
+lattice_param = sys.argv[9]  # The lattice paramter
+timestep = sys.argv[10]  # The timestep
+dump_rate = sys.argv[11]  # The rate to dump data
+ensemble = sys.argv[12]  # The ensemble for the holds
+vols = sys.argv[13]  # The volume for nvt holds (write None for npt)
+holds = sys.argv[14:]  # temperature and holds as tuples
 
 # Open and read template
 template = open(template)
@@ -34,25 +37,32 @@ try:
 except Exception:
     pass
 
-contents = run_creator(
-                       template_contents,
-                       elements,
-                       fraction,
-                       potential,
-                       potential_type,
-                       side,
-                       unit_cell_type,
-                       lattice_param,
-                       timestep,
-                       dump_rate,
-                       ensemble,
-                       vols,
-                       holds
-                       )
+runs = np.arange(runs)
+runs = ['run_'+str(i) for i in runs]
 
-# Write the input file
-file_out = open('steps.in', 'w')
-file_out.write(contents)
-file_out.close()
+for run in runs:
+    contents = run_creator(
+                           template_contents,
+                           elements,
+                           fraction,
+                           potential,
+                           potential_type,
+                           side,
+                           unit_cell_type,
+                           lattice_param,
+                           timestep,
+                           dump_rate,
+                           ensemble,
+                           vols,
+                           holds,
+                           )
 
-print(contents)
+    # Write the input file
+    path = os.path.join(run, 'steps.in')
+
+    if not os.path.exists(run):
+        os.makedirs(run)
+
+    file_out = open(path, 'w')
+    file_out.write(contents)
+    file_out.close()
